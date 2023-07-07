@@ -58,10 +58,15 @@ export default function AuthForm() {
     }
   }
 
-  const socialAction = (action: string) => {
+  const socialAction = (action: 'github' | 'google') => {
     setIsLoading(true)
-
     // NextAuth Social sign in
+    signIn(action, { redirect: false })
+      .then((callback) => {
+        if (callback?.error) toast.error('Invalid credentials')
+        if (callback?.ok && !callback?.error) toast.success('Logged In')
+      })
+      .finally(() => setIsLoading(false))
   }
 
   return (
