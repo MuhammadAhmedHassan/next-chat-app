@@ -1,23 +1,21 @@
 import bcrypt from 'bcrypt'
 
-import prisma from '@app/libs/prisma.db'
+import prisma from '@/app/libs/prismadb'
 import { NextResponse } from 'next/server'
 
 export async function POST(request: Request) {
-  try {
-    const body = await request.json()
-    const { email, name, password } = body
-    if (!email || !name || !password)
-      return new NextResponse('Missing Info', { status: 400 })
+  const body = await request.json()
+  const { email, name, password } = body
 
-    const hashedPassword = await bcrypt.hash(password, 12)
-    const user = await prisma.user.create({
-      data: { email, name, hashedPassword },
-    })
+  const hashedPassword = await bcrypt.hash(password, 12)
 
-    return NextResponse.json(user, { status: 201 })
-  } catch (error) {
-    console.log(error, 'REGISTRATION_ERROR')
-    return new NextResponse('Internal Error', { status: 500 })
-  }
+  const user = await prisma.user.create({
+    data: {
+      email,
+      name,
+      hashedPassword,
+    },
+  })
+
+  return NextResponse.json(user)
 }

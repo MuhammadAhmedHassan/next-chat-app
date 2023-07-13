@@ -8,8 +8,9 @@ const MobileFooter = () => {
   const routes = useRoutes()
   const { isOpen } = useConversation()
 
-  // Hide the footer if the active conversation is going on
-  if (isOpen) return null
+  if (isOpen) {
+    return null
+  }
 
   return (
     <div

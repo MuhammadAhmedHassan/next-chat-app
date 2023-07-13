@@ -1,18 +1,29 @@
-import prisma from '@app/libs/prisma.db'
-import { getSession } from 'next-auth/react'
+import prisma from '@/app/libs/prismadb'
+import getSession from './getSession'
 
-export const getUsers = async () => {
+const getUsers = async () => {
   const session = await getSession()
 
-  if (!session?.user?.email) return []
-  const { email } = session.user
+  if (!session?.user?.email) {
+    return []
+  }
+
   try {
     const users = await prisma.user.findMany({
-      orderBy: { createdAt: 'desc' },
-      where: { NOT: { email } },
+      orderBy: {
+        createdAt: 'desc',
+      },
+      where: {
+        NOT: {
+          email: session.user.email,
+        },
+      },
     })
+
     return users
   } catch (error: any) {
     return []
   }
 }
+
+export default getUsers

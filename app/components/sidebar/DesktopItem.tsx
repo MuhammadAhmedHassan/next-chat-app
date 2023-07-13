@@ -6,18 +6,23 @@ interface DesktopItemProps {
   label: string
   icon: IconType
   href: string
-  onClick?(): void
+  onClick?: () => void
   active?: boolean
 }
 
-export default function DesktopItem({
+const DesktopItem: React.FC<DesktopItemProps> = ({
   label,
   href,
   icon: Icon,
   active,
   onClick,
-}: DesktopItemProps) {
-  const handleClick = () => onClick?.()
+}) => {
+  const handleClick = () => {
+    if (onClick) {
+      return onClick()
+    }
+  }
+
   return (
     <li onClick={handleClick} key={label}>
       <Link
@@ -45,3 +50,5 @@ export default function DesktopItem({
     </li>
   )
 }
+
+export default DesktopItem

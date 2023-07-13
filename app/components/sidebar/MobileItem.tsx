@@ -6,7 +6,7 @@ interface MobileItemProps {
   href: string
   icon: any
   active?: boolean
-  onClick?(): void
+  onClick?: () => void
 }
 
 const MobileItem: React.FC<MobileItemProps> = ({
@@ -15,9 +15,15 @@ const MobileItem: React.FC<MobileItemProps> = ({
   active,
   onClick,
 }) => {
+  const handleClick = () => {
+    if (onClick) {
+      return onClick()
+    }
+  }
+
   return (
     <Link
-      onClick={onClick}
+      onClick={handleClick}
       href={href}
       className={clsx(
         `

@@ -1,36 +1,38 @@
 'use client'
 
 import axios from 'axios'
-import { FieldValues, SubmitHandler, useForm } from 'react-hook-form'
-import { BsGithub, BsGoogle } from 'react-icons/bs'
-
-import Button from '@app/components/Button'
-import Input from '@app/components/inputs/Input'
-import { useCallback, useEffect, useState } from 'react'
-import AuthSocialButton from './AuthSocialButton'
-import { toast } from 'react-hot-toast'
 import { signIn, useSession } from 'next-auth/react'
+import { useCallback, useEffect, useState } from 'react'
+import { BsGithub, BsGoogle } from 'react-icons/bs'
+import { FieldValues, SubmitHandler, useForm } from 'react-hook-form'
 import { useRouter } from 'next/navigation'
+
+import Input from '@/app/components/inputs/Input'
+import AuthSocialButton from './AuthSocialButton'
+import Button from '@/app/components/Button'
+import { toast } from 'react-hot-toast'
 
 type Variant = 'LOGIN' | 'REGISTER'
 
-export default function AuthForm() {
+const AuthForm = () => {
   const session = useSession()
   const router = useRouter()
-
   const [variant, setVariant] = useState<Variant>('LOGIN')
   const [isLoading, setIsLoading] = useState(false)
 
   useEffect(() => {
-    if (session.status === 'authenticated') {
-      console.log('Authenticated')
-      router.push('/users')
+    if (session?.status === 'authenticated') {
+      router.push('/conversations')
     }
-  }, [session.status, router])
+  }, [session?.status, router])
 
   const toggleVariant = useCallback(() => {
-    setVariant((ps) => (ps === 'LOGIN' ? 'REGISTER' : 'LOGIN'))
-  }, [])
+    if (variant === 'LOGIN') {
+      setVariant('REGISTER')
+    } else {
+      setVariant('LOGIN')
+    }
+  }, [variant])
 
   const {
     register,
@@ -48,40 +50,56 @@ export default function AuthForm() {
     setIsLoading(true)
 
     if (variant === 'REGISTER') {
-      // Axios register call
       axios
         .post('/api/register', data)
-        .then(() => signIn('credentials', { ...data }))
-        .catch(() => toast.error('Something went wrong'))
+        .then(() =>
+          signIn('credentials', {
+            ...data,
+            redirect: false,
+          })
+        )
+        .then((callback) => {
+          if (callback?.error) {
+            toast.error('Invalid credentials!')
+          }
+
+          if (callback?.ok) {
+            router.push('/conversations')
+          }
+        })
+        .catch(() => toast.error('Something went wrong!'))
         .finally(() => setIsLoading(false))
     }
 
     if (variant === 'LOGIN') {
-      // NextAuth Signin
       signIn('credentials', {
         ...data,
         redirect: false,
       })
         .then((callback) => {
-          if (callback?.error) toast.error('Invalid credentials')
-          if (callback?.ok && !callback?.error) {
-            toast.success('Logged In')
-            router.push('/users')
+          if (callback?.error) {
+            toast.error('Invalid credentials!')
+          }
+
+          if (callback?.ok) {
+            router.push('/conversations')
           }
         })
         .finally(() => setIsLoading(false))
     }
   }
 
-  const socialAction = (action: 'github' | 'google') => {
+  const socialAction = (action: string) => {
     setIsLoading(true)
-    // NextAuth Social sign in
+
     signIn(action, { redirect: false })
       .then((callback) => {
-        if (callback?.error) toast.error('Invalid credentials')
-        if (callback?.ok && !callback?.error) {
-          toast.success('Logged In')
-          router.push('/users')
+        if (callback?.error) {
+          toast.error('Invalid credentials!')
+        }
+
+        if (callback?.ok) {
+          router.push('/conversations')
         }
       })
       .finally(() => setIsLoading(false))
@@ -89,45 +107,62 @@ export default function AuthForm() {
 
   return (
     <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-      <div className="bg-white px-4 py-8 shadow sm:rounded-lg sm:px-10">
+      <div
+        className="
+        bg-white
+          px-4
+          py-8
+          shadow
+          sm:rounded-lg
+          sm:px-10
+        "
+      >
         <form className="space-y-6" onSubmit={handleSubmit(onSubmit)}>
           {variant === 'REGISTER' && (
             <Input
-              id="name"
-              label="Name"
+              disabled={isLoading}
               register={register}
               errors={errors}
-              disabled={isLoading}
+              required
+              id="name"
+              label="Name"
             />
           )}
-
           <Input
+            disabled={isLoading}
+            register={register}
+            errors={errors}
+            required
             id="email"
-            label="Email"
+            label="Email address"
             type="email"
-            register={register}
-            errors={errors}
-            disabled={isLoading}
           />
           <Input
-            id="password"
-            label="password"
-            type="password"
+            disabled={isLoading}
             register={register}
             errors={errors}
-            disabled={isLoading}
+            required
+            id="password"
+            label="Password"
+            type="password"
           />
-
           <div>
             <Button disabled={isLoading} fullWidth type="submit">
-              {variant === 'LOGIN' ? 'Sign In' : 'Register'}
+              {variant === 'LOGIN' ? 'Sign in' : 'Register'}
             </Button>
           </div>
         </form>
 
         <div className="mt-6">
           <div className="relative">
-            <div className="absolute inset-0 flex items-center">
+            <div
+              className="
+                absolute 
+                inset-0 
+                flex 
+                items-center
+              "
+            >
               <div className="w-full border-t border-gray-300" />
             </div>
             <div className="relative flex justify-center text-sm">
@@ -148,8 +183,17 @@ export default function AuthForm() {
             />
           </div>
         </div>
-
-        <div className="flex gap-2 justify-center text-sm mt-6 px-2 text-gray-500">
+        <div
+          className="
+            flex 
+            gap-2 
+            justify-center 
+            text-sm 
+            mt-6 
+            px-2 
+            text-gray-500
+          "
+        >
           <div>
             {variant === 'LOGIN'
               ? 'New to Messenger?'
@@ -163,3 +207,5 @@ export default function AuthForm() {
     </div>
   )
 }
+
+export default AuthForm

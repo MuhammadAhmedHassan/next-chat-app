@@ -1,20 +1,22 @@
-import { getCurrentUser } from '@app/actions/getCurrentUser'
+import getCurrentUser from '@/app/actions/getCurrentUser'
 import { NextResponse } from 'next/server'
-import prisma from '@app/libs/prisma.db'
+
+import prisma from '@/app/libs/prismadb'
+import { pusherServer } from '@/app/libs/pusher'
 
 export async function POST(request: Request) {
   try {
     const currentUser = await getCurrentUser()
     const body = await request.json()
     const { userId, isGroup, members, name } = body
-    // If we have userId then it is a one-to-one conversation
-    // if we have isGroup, members, name then it is a group chat
 
-    if (!currentUser?.id || !currentUser.email)
-      return new NextResponse('Unauthorized', { status: 401 })
+    if (!currentUser?.id || !currentUser?.email) {
+      return new NextResponse('Unauthorized', { status: 400 })
+    }
 
-    if (isGroup && (!members || members.length < 2 || !name))
+    if (isGroup && (!members || members.length < 2 || !name)) {
       return new NextResponse('Invalid data', { status: 400 })
+    }
 
     if (isGroup) {
       const newConversation = await prisma.conversation.create({
@@ -38,16 +40,15 @@ export async function POST(request: Request) {
       })
 
       // Update all connections with new conversation
-      // newConversation.users.forEach((user) => {
-      //   if (user.email) {
-      //     pusherServer.trigger(user.email, 'conversation:new', newConversation)
-      //   }
-      // })
+      newConversation.users.forEach((user) => {
+        if (user.email) {
+          pusherServer.trigger(user.email, 'conversation:new', newConversation)
+        }
+      })
 
       return NextResponse.json(newConversation)
     }
 
-    // single conversation aka one-to-one conversation
     const existingConversations = await prisma.conversation.findMany({
       where: {
         OR: [
@@ -67,10 +68,10 @@ export async function POST(request: Request) {
 
     const singleConversation = existingConversations[0]
 
-    if (singleConversation) return NextResponse.json(singleConversation)
+    if (singleConversation) {
+      return NextResponse.json(singleConversation)
+    }
 
-    // If we don't already have a sinlge conversatoin then create it and return
-    // the result
     const newConversation = await prisma.conversation.create({
       data: {
         users: {
@@ -84,10 +85,19 @@ export async function POST(request: Request) {
           ],
         },
       },
-      include: { users: true },
+      include: {
+        users: true,
+      },
     })
 
-    return NextResponse.json(newConversation, { status: 201 })
+    // Update all connections with new conversation
+    newConversation.users.map((user) => {
+      if (user.email) {
+        pusherServer.trigger(user.email, 'conversation:new', newConversation)
+      }
+    })
+
+    return NextResponse.json(newConversation)
   } catch (error) {
     return new NextResponse('Internal Error', { status: 500 })
   }

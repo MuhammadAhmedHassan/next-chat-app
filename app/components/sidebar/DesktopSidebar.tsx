@@ -1,27 +1,28 @@
-'use client'
+'use client';
 
-import useRoutes from '@app/hooks/useRoutes'
-import { useState } from 'react'
-import DesktopItem from './DesktopItem'
-import { User } from '@prisma/client'
+import DesktopItem from "./DesktopItem";
+import useRoutes from "@/app/hooks/useRoutes";
+import SettingsModal from "./SettingsModal";
+import { useState } from "react";
+import Avatar from "../Avatar";
+import { User } from "@prisma/client";
 
 interface DesktopSidebarProps {
-  currentUser: User | null
+  currentUser: User
 }
 
-export default function DesktopSidebar({ currentUser }: DesktopSidebarProps) {
-  const routes = useRoutes()
-  const [isOpen, setIsOpen] = useState(false)
+const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
+  currentUser
+}) => {
+  const routes = useRoutes();
+  const [isOpen, setIsOpen] = useState(false);
 
-  return (
+  console.log({ currentUser, }, 'TEST')
+
+  return ( 
     <>
-      {/* <SettingsModal
-        currentUser={currentUser}
-        isOpen={isOpen}
-        onClose={() => setIsOpen(false)}
-      /> */}
-      <div
-        className="
+      <SettingsModal currentUser={currentUser} isOpen={isOpen} onClose={() => setIsOpen(false)} />
+      <div className="
         hidden 
         lg:fixed 
         lg:inset-y-0 
@@ -36,8 +37,7 @@ export default function DesktopSidebar({ currentUser }: DesktopSidebarProps) {
         lg:flex
         lg:flex-col
         justify-between
-      "
-      >
+      ">
         <nav className="mt-4 flex flex-col justify-between">
           <ul role="list" className="flex flex-col items-center space-y-1">
             {routes.map((item) => (
@@ -53,14 +53,16 @@ export default function DesktopSidebar({ currentUser }: DesktopSidebarProps) {
           </ul>
         </nav>
         <nav className="mt-4 flex flex-col justify-between items-center">
-          <div
-            onClick={() => setIsOpen(true)}
+          <div 
+            onClick={() => setIsOpen(true)} 
             className="cursor-pointer hover:opacity-75 transition"
           >
-            {/* <Avatar user={currentUser} /> */}
+            <Avatar user={currentUser} />
           </div>
         </nav>
       </div>
     </>
-  )
+   );
 }
+ 
+export default DesktopSidebar;
